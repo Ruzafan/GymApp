@@ -10,7 +10,7 @@ Extrae todos los ejercicios y devuelve UNICAMENTE un objeto JSON valido con este
 {
   "days": ["PRIMER DIA", "SEGUNDO DIA"],
   "exercises": [
-    { "name": "string", "sets": number, "reps": "string", "day": "string o null", "notes": "string o null" }
+    { "name": "string", "englishName": "string", "sets": number, "reps": "string", "day": "string o null", "notes": "string o null" }
   ],
   "rawText": "string con el texto que puedes leer en la imagen"
 }
@@ -18,6 +18,7 @@ Reglas:
 - "days": lista ordenada de los nombres de los dias que aparecen en la imagen (vacio [] si no hay dias)
 - "day": nombre del dia al que pertenece el ejercicio, tal como aparece en la imagen (null si no hay dias)
 - "name": nombre del ejercicio en el idioma original de la imagen
+- "englishName": nombre del ejercicio en ingles, en minusculas, tal como apareceria en una base de datos de ejercicios (ej: "barbell bench press", "cable lateral raise", "leg press"). Usa nombres estandar de gimnasio en ingles
 - "sets": numero entero de series. Si las reps son "15-12-10" son 3 series con reps distintas
 - "reps": puede ser "10", "8-12", "15-12-10", "AMRAP", "al fallo", "3x15", etc. Siempre string
 - "notes": supersets, descansos especiales, o null si no hay

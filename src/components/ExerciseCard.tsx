@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SessionExercise, ParsedExercise } from '@/models/types';
 import SetRow from '@/components/SetRow';
+import ExerciseInfoModal from '@/components/ExerciseInfoModal';
 
 interface PreviewProps {
   mode: 'preview';
@@ -31,6 +32,12 @@ type Props = PreviewProps | ActiveProps | ReadonlyProps;
 export default function ExerciseCard(props: Props) {
   const [name, setName] = useState(props.exercise.name);
   const [editingName, setEditingName] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+
+  const englishName =
+    props.mode === 'preview'
+      ? (props.exercise as ParsedExercise).englishName
+      : undefined;
 
   // Preview-only state
   const [setsValue, setSetsValue] = useState(
@@ -69,6 +76,13 @@ export default function ExerciseCard(props: Props) {
 
   return (
     <View style={styles.card}>
+      <ExerciseInfoModal
+        visible={showInfo}
+        exerciseName={name}
+        englishName={englishName}
+        onClose={() => setShowInfo(false)}
+      />
+
       {/* Name */}
       <View style={styles.header}>
         {editingName && props.mode === 'preview' ? (
@@ -91,6 +105,14 @@ export default function ExerciseCard(props: Props) {
             {props.mode === 'preview' && <Text style={styles.editHint}>✎</Text>}
           </TouchableOpacity>
         )}
+
+        <TouchableOpacity
+          style={styles.infoBtn}
+          onPress={() => setShowInfo(true)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.infoBtnText}>ℹ</Text>
+        </TouchableOpacity>
 
         {props.mode !== 'preview' && (
           <Text style={styles.progress}>
@@ -208,6 +230,20 @@ const styles = StyleSheet.create({
   editHint: {
     color: '#555',
     fontSize: 13,
+  },
+  infoBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#222',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6,
+  },
+  infoBtnText: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '600',
   },
   nameInput: {
     color: '#e0e0e0',

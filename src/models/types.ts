@@ -2,10 +2,20 @@
 
 export interface ParsedExercise {
   name: string;
+  englishName?: string; // English name for ExerciseDB lookup
   sets: number;
   reps: string;    // "10", "8-12", "AMRAP", etc.
   notes?: string;
   day?: string;    // "PRIMER DIA", "SEGUNDO DIA", etc. if the image has multiple days
+}
+
+export interface ExerciseInfo {
+  gifUrl: string;
+  bodyPart: string;
+  target: string;
+  secondaryMuscles: string[];
+  instructions: string[];
+  cachedAt: string; // ISO timestamp
 }
 
 export interface ParsedWorkout {
