@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { v4 as uuidv4 } from 'uuid';
+import * as Crypto from 'expo-crypto';
 import { RootStackParamList, ParsedExercise, ParsedWorkout, WorkoutTemplate } from '@/models/types';
 import ExerciseCard from '@/components/ExerciseCard';
 import { saveTemplate } from '@/services/storageService';
@@ -61,7 +61,7 @@ export default function ReviewScreen({ navigation, route }: Props) {
     if (routineName.trim() && !fromTemplate) {
       setSaving(true);
       const template: WorkoutTemplate = {
-        id: uuidv4(),
+        id: Crypto.randomUUID(),
         name: routineName.trim(),
         createdAt: new Date().toISOString(),
         exercises: exercises, // save ALL days

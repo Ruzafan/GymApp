@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import * as Crypto from 'expo-crypto';
 import { ParsedWorkout, WorkoutSession, SessionExercise, SessionSet } from '@/models/types';
 
 function buildSession(parsed: ParsedWorkout, imageUri: string): WorkoutSession {
   const exercises: SessionExercise[] = parsed.exercises.map((ex) => ({
-    id: uuidv4(),
+    id: Crypto.randomUUID(),
     name: ex.name,
     notes: ex.notes,
     sets: Array.from({ length: ex.sets }, (_, i): SessionSet => ({
@@ -15,7 +15,7 @@ function buildSession(parsed: ParsedWorkout, imageUri: string): WorkoutSession {
   }));
 
   return {
-    id: uuidv4(),
+    id: Crypto.randomUUID(),
     startedAt: new Date().toISOString(),
     exercises,
     sourceImageUri: imageUri,
