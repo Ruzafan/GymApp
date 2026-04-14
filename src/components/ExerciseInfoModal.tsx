@@ -9,7 +9,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { Image } from 'expo-image';
+import { Image, ImageLoadEventData, ImageErrorEventData } from 'expo-image';
 import { ExerciseInfo } from '@/models/types';
 import { fetchExerciseInfo } from '@/services/exerciseService';
 
@@ -27,11 +27,15 @@ type Status = 'loading' | 'found' | 'not_found' | 'no_key';
 export default function ExerciseInfoModal({ visible, exerciseName, englishName, onClose }: Props) {
   const [info, setInfo] = useState<ExerciseInfo | null>(null);
   const [status, setStatus] = useState<Status>('loading');
+  const [gifLoading, setGifLoading] = useState(true);
+  const [gifError, setGifError] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
     setInfo(null);
     setStatus('loading');
+    setGifLoading(true);
+    setGifError(false);
 
     const apiKey = process.env.EXPO_PUBLIC_RAPIDAPI_KEY;
     if (!apiKey || apiKey.includes('REPLACE')) {
@@ -108,11 +112,30 @@ export default function ExerciseInfoModal({ visible, exerciseName, englishName, 
             <>
               {/* GIF */}
               <View style={styles.gifContainer}>
+                {gifLoading && !gifError && (
+                  <View style={styles.gifPlaceholder}>
+                    <ActivityIndicator size="large" color="#e53935" />
+                  </View>
+                )}
+                {gifError && (
+                  <View style={styles.gifPlaceholder}>
+                    <Text style={styles.gifErrorIcon}>🖼️</Text>
+                    <Text style={styles.gifErrorText}>No se pudo cargar el GIF</Text>
+                  </View>
+                )}
                 <Image
-                  source={info.gifUrl}
-                  style={styles.gif}
+                  source={{
+                    uri: info.gifUrl,
+                    headers: {
+                      'X-RapidAPI-Key': process.env.EXPO_PUBLIC_RAPIDAPI_KEY ?? '',
+                      'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+                    },
+                  }}
+                  style={[styles.gif, gifError && styles.gifHidden]}
                   contentFit="contain"
                   autoplay
+                  onLoad={() => setGifLoading(false)}
+                  onError={() => { setGifLoading(false); setGifError(true); }}
                 />
               </View>
 
@@ -199,8 +222,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 20,
     alignItems: 'center',
+    minHeight: width - 40,
+    justifyContent: 'center',
   },
   gif: { width: width - 40, height: width - 40 },
+  gifHidden: { width: 0, height: 0 },
+  gifPlaceholder: {
+    position: 'absolute',
+    width: width - 40,
+    height: width - 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  gifErrorIcon: { fontSize: 40 },
+  gifErrorText: { color: '#666', fontSize: 14 },
   muscleSection: {
     flexDirection: 'row',
     gap: 12,
