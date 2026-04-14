@@ -2,17 +2,27 @@ import { useState, useCallback } from 'react';
 import * as Crypto from 'expo-crypto';
 import { ParsedWorkout, WorkoutSession, SessionExercise, SessionSet } from '@/models/types';
 
+// "15-12-10" with 3 sets → ["15","12","10"]. "8-12" with 3 sets → ["8-12","8-12","8-12"]
+function splitReps(reps: string, sets: number): string[] {
+  const parts = reps.split('-').map((p) => p.trim()).filter((p) => /^\d+$/.test(p));
+  if (parts.length === sets) return parts;
+  return Array(sets).fill(reps);
+}
+
 function buildSession(parsed: ParsedWorkout, imageUri: string): WorkoutSession {
-  const exercises: SessionExercise[] = parsed.exercises.map((ex) => ({
-    id: Crypto.randomUUID(),
-    name: ex.name,
-    notes: ex.notes,
-    sets: Array.from({ length: ex.sets }, (_, i): SessionSet => ({
-      setNumber: i + 1,
-      targetReps: ex.reps,
-      isComplete: false,
-    })),
-  }));
+  const exercises: SessionExercise[] = parsed.exercises.map((ex) => {
+    const repsPerSet = splitReps(ex.reps, ex.sets);
+    return {
+      id: Crypto.randomUUID(),
+      name: ex.name,
+      notes: ex.notes,
+      sets: Array.from({ length: ex.sets }, (_, i): SessionSet => ({
+        setNumber: i + 1,
+        targetReps: repsPerSet[i],
+        isComplete: false,
+      })),
+    };
+  });
 
   return {
     id: Crypto.randomUUID(),
