@@ -5,10 +5,12 @@ export interface ParsedExercise {
   sets: number;
   reps: string;    // "10", "8-12", "AMRAP", etc.
   notes?: string;
+  day?: string;    // "PRIMER DIA", "SEGUNDO DIA", etc. if the image has multiple days
 }
 
 export interface ParsedWorkout {
   exercises: ParsedExercise[];
+  days: string[];  // ordered list of unique day names found
   rawText?: string;
 }
 

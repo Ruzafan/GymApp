@@ -8,18 +8,22 @@ const SYSTEM_PROMPT = `Eres un asistente que analiza fotos de listados de ejerci
 El usuario te enviara una foto de un listado escrito a mano o impreso con ejercicios, series y repeticiones.
 Extrae todos los ejercicios y devuelve UNICAMENTE un objeto JSON valido con este formato exacto:
 {
+  "days": ["PRIMER DIA", "SEGUNDO DIA"],
   "exercises": [
-    { "name": "string", "sets": number, "reps": "string", "notes": "string o null" }
+    { "name": "string", "sets": number, "reps": "string", "day": "string o null", "notes": "string o null" }
   ],
   "rawText": "string con el texto que puedes leer en la imagen"
 }
 Reglas:
+- "days": lista ordenada de los nombres de los dias que aparecen en la imagen (vacio [] si no hay dias)
+- "day": nombre del dia al que pertenece el ejercicio, tal como aparece en la imagen (null si no hay dias)
 - "name": nombre del ejercicio en el idioma original de la imagen
-- "sets": numero entero de series
-- "reps": puede ser "10", "8-12", "AMRAP", "al fallo", etc. Siempre string
+- "sets": numero entero de series. Si las reps son "15-12-10" son 3 series con reps distintas
+- "reps": puede ser "10", "8-12", "15-12-10", "AMRAP", "al fallo", "3x15", etc. Siempre string
 - "notes": supersets, descansos especiales, o null si no hay
 - No incluyas ningun texto fuera del JSON
-- Si no puedes leer algo con claridad, haz tu mejor interpretacion`;
+- Si no puedes leer algo con claridad, haz tu mejor interpretacion
+- Extrae TODOS los ejercicios de TODOS los dias`;
 
 export async function extractWorkout(imageUri: string): Promise<ParsedWorkout> {
   const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
@@ -34,7 +38,7 @@ export async function extractWorkout(imageUri: string): Promise<ParsedWorkout> {
 
   const body = {
     model: MODEL,
-    max_tokens: 1024,
+    max_tokens: 4096,
     system: SYSTEM_PROMPT,
     messages: [
       {
