@@ -6,9 +6,10 @@ import { formatDate, formatTime, formatDuration } from '@/utils/dateUtils';
 interface Props {
   session: WorkoutSession;
   onPress: () => void;
+  onLongPress?: () => void;
 }
 
-export default function WorkoutSummaryCard({ session, onPress }: Props) {
+export default function WorkoutSummaryCard({ session, onPress, onLongPress }: Props) {
   const totalSets = session.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
   const completedSets = session.exercises.reduce(
     (acc, ex) => acc + ex.sets.filter((s) => s.isComplete).length,
@@ -20,7 +21,7 @@ export default function WorkoutSummaryCard({ session, onPress }: Props) {
       : null;
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity style={styles.card} onPress={onPress} onLongPress={onLongPress} activeOpacity={0.75} delayLongPress={400}>
       <View style={styles.header}>
         <Text style={styles.date}>{formatDate(session.startedAt)}</Text>
         <Text style={styles.time}>{formatTime(session.startedAt)}</Text>

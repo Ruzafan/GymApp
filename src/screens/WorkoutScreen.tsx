@@ -12,6 +12,7 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '@/models/types';
 import { useWorkoutSession } from '@/hooks/useWorkoutSession';
 import { useWorkoutHistory } from '@/hooks/useWorkoutHistory';
+import { logWorkoutToHealth } from '@/services/healthService';
 import ExerciseCard from '@/components/ExerciseCard';
 import { formatElapsed } from '@/utils/dateUtils';
 
@@ -47,6 +48,8 @@ export default function WorkoutScreen({ navigation, route }: Props) {
           onPress: async () => {
             const completed = finishWorkout();
             await save(completed);
+            // Silently logs to Apple Health / Health Connect if available
+            logWorkoutToHealth(completed).catch(() => {});
             navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
           },
         },

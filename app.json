@@ -13,9 +13,16 @@
     },
     "ios": {
       "supportsTablet": false,
+      "bundleIdentifier": "com.gymapp.app",
       "infoPlist": {
         "NSCameraUsageDescription": "Se usa la camara para fotografiar tu listado de ejercicios.",
-        "NSPhotoLibraryUsageDescription": "Se accede a la galeria para seleccionar una foto de tu listado de ejercicios."
+        "NSPhotoLibraryUsageDescription": "Se accede a la galeria para seleccionar una foto de tu listado de ejercicios.",
+        "NSHealthShareUsageDescription": "GymApp lee tu frecuencia cardiaca y calorias de Apple Health para mostrarte estadisticas del entrenamiento.",
+        "NSHealthUpdateUsageDescription": "GymApp guarda tus entrenamientos en Apple Health para que aparezcan en los anillos de actividad del Apple Watch."
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": []
       }
     },
     "android": {
@@ -23,9 +30,14 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f0f0f"
       },
+      "package": "com.gymapp.app",
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE"
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.WRITE_EXERCISE",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.WRITE_ACTIVE_CALORIES_BURNED"
       ]
     },
     "web": {

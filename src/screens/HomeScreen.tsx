@@ -5,14 +5,13 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  SectionList,
-  Alert,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList, WorkoutTemplate } from '@/models/types';
 import { useWorkoutHistory } from '@/hooks/useWorkoutHistory';
 import { getAllTemplates, deleteTemplate } from '@/services/storageService';
+import { Alert } from 'react-native';
 import WorkoutSummaryCard from '@/components/WorkoutSummaryCard';
 import EmptyState from '@/components/EmptyState';
 
@@ -21,7 +20,7 @@ type Props = {
 };
 
 export default function HomeScreen({ navigation }: Props) {
-  const { sessions, loading, refresh } = useWorkoutHistory();
+  const { sessions, loading, refresh, remove } = useWorkoutHistory();
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
 
   async function loadTemplates() {
@@ -35,6 +34,17 @@ export default function HomeScreen({ navigation }: Props) {
       loadTemplates();
     }, [refresh])
   );
+
+  function handleDeleteSession(id: string) {
+    Alert.alert(
+      'Eliminar entrenamiento',
+      '¿Eliminar este entrenamiento del historial?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Eliminar', style: 'destructive', onPress: () => remove(id) },
+      ]
+    );
+  }
 
   function handleDeleteTemplate(id: string, name: string) {
     Alert.alert(
@@ -129,6 +139,7 @@ export default function HomeScreen({ navigation }: Props) {
                   onPress={() =>
                     navigation.navigate('HistoryDetail', { sessionId: item.id })
                   }
+                  onLongPress={() => handleDeleteSession(item.id)}
                 />
               ))}
               <View style={styles.bottomPad} />
