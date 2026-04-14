@@ -1,15 +1,18 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
+  Text,
   FlatList,
   TouchableOpacity,
-  Text,
   StyleSheet,
+  SectionList,
+  Alert,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useFocusEffect } from '@react-navigation/native';
-import { RootStackParamList } from '@/models/types';
+import { RootStackParamList, WorkoutTemplate } from '@/models/types';
 import { useWorkoutHistory } from '@/hooks/useWorkoutHistory';
+import { getAllTemplates, deleteTemplate } from '@/services/storageService';
 import WorkoutSummaryCard from '@/components/WorkoutSummaryCard';
 import EmptyState from '@/components/EmptyState';
 
@@ -19,36 +22,121 @@ type Props = {
 
 export default function HomeScreen({ navigation }: Props) {
   const { sessions, loading, refresh } = useWorkoutHistory();
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
 
-  // Refresh history every time we come back to this screen
+  async function loadTemplates() {
+    const all = await getAllTemplates();
+    setTemplates(all);
+  }
+
   useFocusEffect(
     useCallback(() => {
       refresh();
+      loadTemplates();
     }, [refresh])
   );
 
+  function handleDeleteTemplate(id: string, name: string) {
+    Alert.alert(
+      'Eliminar rutina',
+      `¿Eliminar la rutina "${name}"? El historial de entrenamientos no se verá afectado.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteTemplate(id);
+            loadTemplates();
+          },
+        },
+      ]
+    );
+  }
+
+  function handleStartTemplate(template: WorkoutTemplate) {
+    navigation.navigate('Review', {
+      parsedWorkout: {
+        exercises: template.exercises,
+        days: template.days,
+      },
+      imageUri: template.sourceImageUri ?? '',
+      fromTemplate: true,
+    });
+  }
+
+  const hasSessions = sessions.length > 0;
+  const hasTemplates = templates.length > 0;
+  const isEmpty = !loading && !hasSessions && !hasTemplates;
+
   return (
     <View style={styles.container}>
-      <FlatList
-        data={sessions}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <WorkoutSummaryCard
-            session={item}
-            onPress={() => navigation.navigate('HistoryDetail', { sessionId: item.id })}
-          />
-        )}
-        ListEmptyComponent={
-          loading ? null : (
-            <EmptyState
-              icon="🏋️"
-              title="Sin entrenamientos aún"
-              subtitle="Toca el botón + para fotografiar tu listado y empezar tu primer entrenamiento."
-            />
-          )
-        }
-        contentContainerStyle={sessions.length === 0 ? styles.emptyContent : styles.listContent}
-      />
+      {isEmpty ? (
+        <EmptyState
+          icon="🏋️"
+          title="Sin entrenamientos aún"
+          subtitle="Toca el botón + para fotografiar tu listado y empezar tu primer entrenamiento."
+        />
+      ) : (
+        <FlatList
+          data={[]}
+          renderItem={null}
+          keyExtractor={() => ''}
+          ListHeaderComponent={
+            <>
+              {/* Saved routines */}
+              {hasTemplates && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Mis Rutinas</Text>
+                  {templates.map((t) => (
+                    <View key={t.id} style={styles.templateCard}>
+                      <TouchableOpacity
+                        style={styles.templateMain}
+                        onPress={() => handleStartTemplate(t)}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={styles.templateName}>{t.name}</Text>
+                        <Text style={styles.templateMeta}>
+                          {t.days.length > 0
+                            ? t.days.join(' · ')
+                            : `${t.exercises.length} ejercicios`}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.deleteTemplateBtn}
+                        onPress={() => handleDeleteTemplate(t.id, t.name)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Text style={styles.deleteIcon}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* History */}
+              {hasSessions && (
+                <Text style={styles.sectionTitle}>Historial</Text>
+              )}
+            </>
+          }
+          ListFooterComponent={
+            <>
+              {sessions.map((item) => (
+                <WorkoutSummaryCard
+                  key={item.id}
+                  session={item}
+                  onPress={() =>
+                    navigation.navigate('HistoryDetail', { sessionId: item.id })
+                  }
+                />
+              ))}
+              <View style={styles.bottomPad} />
+            </>
+          }
+          contentContainerStyle={styles.listContent}
+        />
+      )}
 
       <TouchableOpacity
         style={styles.fab}
@@ -62,17 +150,51 @@ export default function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: '#0f0f0f' },
+  listContent: { paddingTop: 16 },
+  section: { marginBottom: 8 },
+  sectionTitle: {
+    color: '#666',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginHorizontal: 16,
+    marginBottom: 10,
+  },
+  templateCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 14,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    overflow: 'hidden',
+  },
+  templateMain: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
+    padding: 14,
   },
-  listContent: {
-    paddingTop: 16,
-    paddingBottom: 100,
+  templateName: {
+    color: '#e0e0e0',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  emptyContent: {
-    flex: 1,
+  templateMeta: {
+    color: '#666',
+    fontSize: 13,
   },
+  deleteTemplateBtn: {
+    padding: 16,
+  },
+  deleteIcon: {
+    color: '#444',
+    fontSize: 14,
+  },
+  bottomPad: { height: 100 },
   fab: {
     position: 'absolute',
     bottom: 28,
@@ -89,10 +211,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  fabIcon: {
-    color: '#fff',
-    fontSize: 32,
-    fontWeight: '300',
-    lineHeight: 36,
-  },
+  fabIcon: { color: '#fff', fontSize: 32, fontWeight: '300', lineHeight: 36 },
 });

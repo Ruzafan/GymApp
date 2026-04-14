@@ -9,21 +9,18 @@ import {
 import { SessionExercise, ParsedExercise } from '@/models/types';
 import SetRow from '@/components/SetRow';
 
-// Preview mode: shows a parsed exercise before the workout starts
 interface PreviewProps {
   mode: 'preview';
   exercise: ParsedExercise;
-  onEdit?: (updated: ParsedExercise) => void;
+  onEdit: (updated: ParsedExercise) => void;
 }
 
-// Active mode: shows a live session exercise with set tracking
 interface ActiveProps {
   mode: 'active';
   exercise: SessionExercise;
   onSetComplete: (setIndex: number, weightKg: number, completedReps: number) => void;
 }
 
-// Read-only mode: for history detail
 interface ReadonlyProps {
   mode: 'readonly';
   exercise: SessionExercise;
@@ -32,15 +29,36 @@ interface ReadonlyProps {
 type Props = PreviewProps | ActiveProps | ReadonlyProps;
 
 export default function ExerciseCard(props: Props) {
+  const [name, setName] = useState(props.exercise.name);
   const [editingName, setEditingName] = useState(false);
-  const [nameValue, setNameValue] = useState(
-    props.mode === 'preview' ? props.exercise.name : props.exercise.name
+
+  // Preview-only state
+  const [setsValue, setSetsValue] = useState(
+    props.mode === 'preview' ? String(props.exercise.sets) : '0'
+  );
+  const [repsValue, setRepsValue] = useState(
+    props.mode === 'preview' ? props.exercise.reps : ''
   );
 
   function commitName() {
     setEditingName(false);
-    if (props.mode === 'preview' && props.onEdit) {
-      props.onEdit({ ...props.exercise, name: nameValue });
+    if (props.mode === 'preview') {
+      props.onEdit({ ...props.exercise, name });
+    }
+  }
+
+  function commitSets(val: string) {
+    if (props.mode !== 'preview') return;
+    const n = parseInt(val, 10);
+    if (!isNaN(n) && n > 0) {
+      props.onEdit({ ...props.exercise, sets: n });
+    }
+  }
+
+  function commitReps(val: string) {
+    if (props.mode !== 'preview') return;
+    if (val.trim()) {
+      props.onEdit({ ...props.exercise, reps: val.trim() });
     }
   }
 
@@ -48,20 +66,16 @@ export default function ExerciseCard(props: Props) {
     props.mode !== 'preview'
       ? props.exercise.sets.filter((s) => s.isComplete).length
       : 0;
-  const totalCount =
-    props.mode === 'preview'
-      ? props.exercise.sets
-      : props.exercise.sets.length;
 
   return (
     <View style={styles.card}>
-      {/* Header */}
+      {/* Name */}
       <View style={styles.header}>
         {editingName && props.mode === 'preview' ? (
           <TextInput
             style={styles.nameInput}
-            value={nameValue}
-            onChangeText={setNameValue}
+            value={name}
+            onChangeText={setName}
             onBlur={commitName}
             onSubmitEditing={commitName}
             autoFocus
@@ -71,27 +85,61 @@ export default function ExerciseCard(props: Props) {
           <TouchableOpacity
             onPress={() => props.mode === 'preview' && setEditingName(true)}
             activeOpacity={props.mode === 'preview' ? 0.6 : 1}
+            style={styles.nameTouchable}
           >
-            <Text style={styles.name}>{nameValue}</Text>
+            <Text style={styles.name}>{name}</Text>
+            {props.mode === 'preview' && <Text style={styles.editHint}>✎</Text>}
           </TouchableOpacity>
         )}
 
         {props.mode !== 'preview' && (
           <Text style={styles.progress}>
-            {completedCount}/{props.exercise.sets.length}
+            {completedCount}/{(props.exercise as SessionExercise).sets.length}
           </Text>
         )}
       </View>
 
-      {/* Preview mode: simple summary */}
+      {/* Preview mode: editable sets × reps */}
       {props.mode === 'preview' && (
-        <Text style={styles.summary}>
-          {props.exercise.sets} series × {props.exercise.reps} reps
-          {props.exercise.notes ? `  ·  ${props.exercise.notes}` : ''}
-        </Text>
+        <View style={styles.previewRow}>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>SERIES</Text>
+            <TextInput
+              style={styles.fieldInput}
+              value={setsValue}
+              onChangeText={setSetsValue}
+              onBlur={() => commitSets(setsValue)}
+              onSubmitEditing={() => commitSets(setsValue)}
+              keyboardType="number-pad"
+              selectTextOnFocus
+              returnKeyType="done"
+            />
+          </View>
+
+          <Text style={styles.times}>×</Text>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>REPS</Text>
+            <TextInput
+              style={[styles.fieldInput, styles.fieldInputWide]}
+              value={repsValue}
+              onChangeText={setRepsValue}
+              onBlur={() => commitReps(repsValue)}
+              onSubmitEditing={() => commitReps(repsValue)}
+              selectTextOnFocus
+              returnKeyType="done"
+              placeholder="ej: 10 ó 12-10-8"
+              placeholderTextColor="#444"
+            />
+          </View>
+
+          {props.exercise.notes ? (
+            <Text style={styles.notes} numberOfLines={1}>{props.exercise.notes}</Text>
+          ) : null}
+        </View>
       )}
 
-      {/* Active mode: set rows */}
+      {/* Active mode */}
       {props.mode === 'active' && (
         <View style={styles.setList}>
           <View style={styles.setHeader}>
@@ -99,20 +147,22 @@ export default function ExerciseCard(props: Props) {
             <Text style={[styles.setHeaderText, { flex: 1 }]}>Peso · Reps</Text>
             <Text style={styles.setHeaderText}>Hecho</Text>
           </View>
-          {props.exercise.sets.map((set, idx) => (
+          {(props.exercise as SessionExercise).sets.map((set, idx) => (
             <SetRow
               key={idx}
               set={set}
-              onComplete={(kg, reps) => props.onSetComplete(idx, kg, reps)}
+              onComplete={(kg, reps) =>
+                (props as ActiveProps).onSetComplete(idx, kg, reps)
+              }
             />
           ))}
         </View>
       )}
 
-      {/* Readonly mode: completed sets summary */}
+      {/* Readonly mode */}
       {props.mode === 'readonly' && (
         <View style={styles.setList}>
-          {props.exercise.sets.map((set, idx) => (
+          {(props.exercise as SessionExercise).sets.map((set, idx) => (
             <View key={idx} style={styles.readonlyRow}>
               <Text style={styles.readonlySetNum}>{set.setNumber}</Text>
               <Text style={styles.readonlyDetails}>
@@ -141,17 +191,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  nameTouchable: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   name: {
     color: '#e0e0e0',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '700',
     flex: 1,
   },
+  editHint: {
+    color: '#555',
+    fontSize: 13,
+  },
   nameInput: {
     color: '#e0e0e0',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '700',
     flex: 1,
     borderBottomWidth: 1,
@@ -163,9 +223,47 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 15,
   },
-  summary: {
-    color: '#888',
-    fontSize: 14,
+  previewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  fieldGroup: {
+    alignItems: 'center',
+    gap: 3,
+  },
+  fieldLabel: {
+    color: '#555',
+    fontSize: 9,
+    letterSpacing: 0.5,
+  },
+  fieldInput: {
+    backgroundColor: '#111',
+    color: '#e0e0e0',
+    fontSize: 15,
+    fontWeight: '600',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    textAlign: 'center',
+    minWidth: 44,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  fieldInputWide: {
+    minWidth: 80,
+  },
+  times: {
+    color: '#555',
+    fontSize: 16,
+    marginTop: 12,
+  },
+  notes: {
+    color: '#666',
+    fontSize: 12,
+    flex: 1,
+    marginTop: 12,
+    marginLeft: 4,
   },
   setList: {
     marginTop: 4,

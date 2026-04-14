@@ -40,12 +40,23 @@ export interface WorkoutSession {
   sourceImageUri?: string;
 }
 
+// ─── Saved routine (reusable template) ───────────────────────────────────────
+
+export interface WorkoutTemplate {
+  id: string;
+  name: string;
+  createdAt: string;    // ISO timestamp
+  exercises: ParsedExercise[];
+  days: string[];
+  sourceImageUri?: string;
+}
+
 // ─── Navigation param types ───────────────────────────────────────────────────
 
 export type RootStackParamList = {
   Home: undefined;
   Capture: undefined;
-  Review: { parsedWorkout: ParsedWorkout; imageUri: string };
-  Workout: { parsedWorkout: ParsedWorkout; imageUri: string };
+  Review: { parsedWorkout: ParsedWorkout; imageUri: string; fromTemplate?: boolean };
+  Workout: { parsedWorkout: ParsedWorkout; imageUri: string; templateName?: string };
   HistoryDetail: { sessionId: string };
 };
