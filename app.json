@@ -43,7 +43,8 @@
         {
           "photosPermission": "Se accede a la galeria para seleccionar una foto de tu listado de ejercicios."
         }
-      ]
+      ],
+      "expo-asset"
     ]
   }
 }
