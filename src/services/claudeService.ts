@@ -74,8 +74,22 @@ export async function extractWorkout(imageUri: string): Promise<ParsedWorkout> {
     );
   }
 
-  const data = await response.json() as { content: { type: string; text: string }[] };
-  const text = data.content[0]?.text ?? '';
+  const data = await response.json() as {
+    content: { type: string; text: string }[];
+    stop_reason?: string;
+    error?: { message: string };
+  };
+
+  // Handle API-level errors returned with 200 status
+  if (data.error) {
+    throw new Error(`Error de API: ${data.error.message}`);
+  }
+
+  const text = data.content?.[0]?.text ?? '';
+
+  if (!text) {
+    throw new Error(`Respuesta vacía de la IA. stop_reason: ${data.stop_reason}`);
+  }
 
   // Strip markdown code fences if Claude wraps the JSON
   const cleaned = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
@@ -83,6 +97,6 @@ export async function extractWorkout(imageUri: string): Promise<ParsedWorkout> {
   try {
     return JSON.parse(cleaned) as ParsedWorkout;
   } catch {
-    throw new Error('No se pudo interpretar la respuesta de la IA. Intenta con una foto mas clara.');
+    throw new Error(`La IA respondió pero no en formato JSON.\nRespuesta: ${cleaned.slice(0, 200)}`);
   }
 }
