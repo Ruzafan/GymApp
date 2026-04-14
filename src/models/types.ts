@@ -11,6 +11,7 @@ export interface ParsedExercise {
 
 export interface ExerciseInfo {
   gifUrl: string;
+  localGifUri?: string; // local file path after download
   bodyPart: string;
   target: string;
   secondaryMuscles: string[];

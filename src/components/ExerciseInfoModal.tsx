@@ -124,13 +124,7 @@ export default function ExerciseInfoModal({ visible, exerciseName, englishName, 
                   </View>
                 )}
                 <Image
-                  source={{
-                    uri: info.gifUrl,
-                    headers: {
-                      'X-RapidAPI-Key': process.env.EXPO_PUBLIC_RAPIDAPI_KEY ?? '',
-                      'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
-                    },
-                  }}
+                  source={{ uri: info.localGifUri ?? info.gifUrl }}
                   style={[styles.gif, gifError && styles.gifHidden]}
                   contentFit="contain"
                   autoplay
