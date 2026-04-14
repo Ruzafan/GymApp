@@ -3,13 +3,13 @@ import {
   Modal,
   View,
   Text,
-  Image,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
   Dimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { ExerciseInfo } from '@/models/types';
 import { fetchExerciseInfo } from '@/services/exerciseService';
 
@@ -109,9 +109,10 @@ export default function ExerciseInfoModal({ visible, exerciseName, englishName, 
               {/* GIF */}
               <View style={styles.gifContainer}>
                 <Image
-                  source={{ uri: info.gifUrl }}
+                  source={info.gifUrl}
                   style={styles.gif}
-                  resizeMode="contain"
+                  contentFit="contain"
+                  autoplay
                 />
               </View>
 
